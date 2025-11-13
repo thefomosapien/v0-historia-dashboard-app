@@ -15,7 +15,29 @@ export default async function DashboardPage() {
   }
 
   // Get user profile
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: profiles } = await supabase.from("profiles").select("*").eq("id", user.id)
+
+  let profile = profiles?.[0]
+
+  if (!profile) {
+    const { data: newProfile, error: insertError } = await supabase
+      .from("profiles")
+      .insert({
+        id: user.id,
+        email: user.email!,
+        full_name: user.user_metadata?.full_name || "User",
+        date_of_birth: user.user_metadata?.date_of_birth || new Date().toISOString().split("T")[0],
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error("[v0] Failed to create profile:", insertError)
+      redirect("/auth/login")
+    }
+
+    profile = newProfile
+  }
 
   if (!profile) {
     redirect("/auth/login")

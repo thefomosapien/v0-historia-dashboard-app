@@ -46,12 +46,9 @@ export default async function WeekPage({ params }: PageProps) {
   const hasOccurred = weekStartDate <= today
 
   // Get existing week data
-  const { data: existingWeek } = await supabase
-    .from("weeks")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("week_number", weekNum)
-    .single()
+  const { data: weekData } = await supabase.from("weeks").select("*").eq("user_id", user.id).eq("week_number", weekNum)
+
+  const existingWeek = weekData?.[0] || null
 
   return (
     <div className="min-h-screen bg-stone-50">

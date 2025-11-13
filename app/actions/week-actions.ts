@@ -19,12 +19,13 @@ export async function saveWeek(data: SaveWeekData) {
   const supabase = await createClient()
 
   // Check if week already exists
-  const { data: existingWeek } = await supabase
+  const { data: existingWeeks } = await supabase
     .from("weeks")
     .select("id")
     .eq("user_id", data.userId)
     .eq("week_number", data.weekNumber)
-    .single()
+
+  const existingWeek = existingWeeks?.[0]
 
   const weekData = {
     user_id: data.userId,
