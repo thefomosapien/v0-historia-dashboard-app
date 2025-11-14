@@ -4,8 +4,8 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
-import { Star } from "lucide-react"
+import { useRouter } from 'next/navigation'
+import { Star } from 'lucide-react'
 
 interface Week {
   id: string
@@ -15,6 +15,7 @@ interface Week {
   location: string | null
   life_chapter: string | null
   is_milestone: boolean
+  milestone_title: string | null
   is_documented: boolean
 }
 
@@ -39,6 +40,24 @@ export function WeekCell({ weekNumber, week, isLived, userId, size }: WeekCellPr
     if (week?.is_milestone) return "bg-amber-500"
     if (week?.is_documented) return "bg-lime-600"
     return "bg-stone-400"
+  }
+
+  if (week?.is_milestone && week?.milestone_title && size === "large") {
+    return (
+      <div
+        className={cn(
+          "rounded-sm transition-all cursor-pointer border border-transparent",
+          "px-2 py-1 flex items-center gap-1.5 min-w-0",
+          "bg-amber-500 hover:bg-amber-600"
+        )}
+        onClick={handleDocumentWeek}
+      >
+        <Star className="w-3 h-3 text-white fill-white flex-shrink-0" />
+        <span className="text-xs font-medium text-white truncate flex-1">
+          {week.milestone_title}
+        </span>
+      </div>
+    )
   }
 
   const cellClasses = cn(

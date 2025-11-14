@@ -97,7 +97,7 @@ export function WeekGrid({ weeksLived, documentedWeeks, userId }: WeekGridProps)
             <div className="mb-4 text-sm text-stone-600">
               Viewing weeks {selectedYear * 52 + 1} - {Math.min((selectedYear + 1) * 52, weeksLived)} of your life
             </div>
-            <div className="grid grid-cols-13 gap-2">
+            <div className="flex flex-wrap gap-1">
               {weeksToDisplay.map((weekNumber) => {
                 const week = weekMap.get(weekNumber)
                 const isLived = weekNumber <= weeksLived

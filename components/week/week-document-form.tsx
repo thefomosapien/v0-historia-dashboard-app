@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { saveWeek, deleteWeek } from "@/app/actions/week-actions"
-import { Trash2 } from "lucide-react"
+import { Trash2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +37,7 @@ interface WeekDocumentFormProps {
     location: string | null
     chapter: string | null
     is_milestone: boolean | null
+    milestone_title: string | null
   } | null
 }
 
@@ -63,6 +64,7 @@ export function WeekDocumentForm({
   const [location, setLocation] = useState(existingWeek?.location || "")
   const [chapter, setChapter] = useState(existingWeek?.chapter || "")
   const [isMilestone, setIsMilestone] = useState(existingWeek?.is_milestone || false)
+  const [milestoneTitle, setMilestoneTitle] = useState(existingWeek?.milestone_title || "")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -82,6 +84,7 @@ export function WeekDocumentForm({
         location: location || null,
         chapter: chapter || null,
         isMilestone,
+        milestoneTitle: isMilestone ? (milestoneTitle || title || null) : null,
       })
 
       router.push("/dashboard")
@@ -191,6 +194,22 @@ export function WeekDocumentForm({
                 <p className="text-sm text-stone-500">Major life events like graduations, weddings, career changes</p>
               </div>
             </div>
+
+            {isMilestone && (
+              <div className="space-y-2 pl-6 border-l-2 border-amber-500">
+                <Label htmlFor="milestoneTitle">Milestone Title (appears in grid)</Label>
+                <Input
+                  id="milestoneTitle"
+                  value={milestoneTitle}
+                  onChange={(e) => setMilestoneTitle(e.target.value)}
+                  placeholder="e.g., Graduated College, Got Married, Started Company"
+                  className="border-stone-300"
+                />
+                <p className="text-sm text-stone-500">
+                  Short title displayed inline in the week grid (uses week title if empty)
+                </p>
+              </div>
+            )}
 
             <div className="flex items-center justify-between pt-4 border-t border-stone-200">
               <div>
