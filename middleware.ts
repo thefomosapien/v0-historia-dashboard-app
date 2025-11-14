@@ -1,8 +1,9 @@
-import { updateSession } from "@/lib/supabase/middleware"
-import type { NextRequest } from "next/server"
+import type { NextRequest, NextResponse } from "next/server"
 
+// Authentication is handled at the page level instead
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // Just pass through - authentication happens in individual pages
+  return
 }
 
 export const config = {

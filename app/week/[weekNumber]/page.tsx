@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect, notFound } from "next/navigation"
+import { redirect, notFound } from 'next/navigation'
 import { WeekDocumentForm } from "@/components/week/week-document-form"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft } from 'lucide-react'
 
 interface PageProps {
   params: Promise<{ weekNumber: string }>
@@ -27,7 +27,9 @@ export default async function WeekPage({ params }: PageProps) {
   }
 
   // Get user profile to calculate dates
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: profiles } = await supabase.from("profiles").select("*").eq("id", user.id)
+
+  const profile = profiles?.[0]
 
   if (!profile) {
     redirect("/auth/login")
