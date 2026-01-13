@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { WeekStats } from "@/components/dashboard/week-stats"
 import { WeekGrid } from "@/components/dashboard/week-grid"
@@ -48,18 +48,62 @@ export default async function DashboardPage() {
   const today = new Date()
   const weeksLived = Math.floor((today.getTime() - birthDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
 
-  // Get documented weeks
-  const { data: weeks, count: documentedCount } = await supabase
+  const birthMonth = birthDate.getMonth()
+  const birthDay = birthDate.getDate()
+  const birthYear = birthDate.getFullYear()
+
+  const birthdayMilestones = []
+  
+  for (let age = 1; age <= 100; age++) {
+    const birthdayYear = birthYear + age
+    const birthdayDate = new Date(birthdayYear, birthMonth, birthDay)
+    
+    birthdayMilestones.push({
+      user_id: user.id,
+      milestone_date: birthdayDate.toISOString().split('T')[0],
+      title: `${age} in ${birthdayYear}`,
+      is_birthday: true,
+    })
+  }
+
+  // Check which birthday milestones already exist
+  const { data: existingBirthdays } = await supabase
+    .from("milestones")
+    .select("milestone_date")
+    .eq("user_id", user.id)
+    .eq("is_birthday", true)
+
+  const existingDates = new Set(existingBirthdays?.map(m => m.milestone_date) || [])
+
+  // Insert birthday milestones that don't exist yet
+  const milestonesToInsert = birthdayMilestones.filter(
+    m => !existingDates.has(m.milestone_date)
+  )
+
+  if (milestonesToInsert.length > 0) {
+    await supabase.from("milestones").insert(milestonesToInsert)
+  }
+
+  // Fetch all milestones
+  const { data: milestones } = await supabase
+    .from("milestones")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("milestone_date", { ascending: true })
+
+  // Fetch documented weeks
+  const { data: weeks } = await supabase
+    .from("weeks")
+    .select("*")
+    .eq("user_id", user.id)
+
+  const { count: documentedCount } = await supabase
     .from("weeks")
     .select("*", { count: "exact" })
     .eq("user_id", user.id)
     .eq("is_documented", true)
 
-  const { count: milestoneCount } = await supabase
-    .from("weeks")
-    .select("*", { count: "exact" })
-    .eq("user_id", user.id)
-    .eq("is_milestone", true)
+  const milestoneCount = milestones?.length || 0
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -69,11 +113,17 @@ export default async function DashboardPage() {
         <WeekStats
           weeksLived={weeksLived}
           weeksDocumented={documentedCount || 0}
-          milestoneCount={milestoneCount || 0}
+          milestoneCount={milestoneCount}
           birthDate={profile.date_of_birth}
         />
 
-        <WeekGrid weeksLived={weeksLived} documentedWeeks={weeks || []} userId={user.id} />
+        <WeekGrid 
+          weeksLived={weeksLived} 
+          documentedWeeks={weeks || []} 
+          milestones={milestones || []}
+          birthDate={profile.date_of_birth}
+          userId={user.id} 
+        />
       </main>
     </div>
   )

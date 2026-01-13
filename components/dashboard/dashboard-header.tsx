@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
+import Image from "next/image"
 
 interface DashboardHeaderProps {
   profile: {
@@ -23,8 +24,16 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
   return (
     <header className="border-b border-stone-200 bg-white">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-slate-900">Historia</h1>
+        <div className="flex items-center gap-3">
+          <Image
+            src="/historia-logo.svg"
+            alt="Historia"
+            width={160}
+            height={40}
+            className="h-10 w-auto"
+            priority
+          />
+          {/* </CHANGE> */}
           <p className="text-sm text-stone-600">Welcome back, {profile.full_name || profile.email}</p>
         </div>
 

@@ -10,41 +10,61 @@ interface Week {
   week_number: number
   title: string | null
   content: string | null
-  mood: string | null
-  energy_level: number | null
   is_documented: boolean
-  is_milestone: boolean
+  location: string | null
+  chapter: string | null
+}
+
+interface Milestone {
+  id: string
+  milestone_date: string
+  title: string
+  description: string | null
+  is_birthday: boolean
 }
 
 interface WeekGridProps {
   weeksLived: number
   documentedWeeks: Week[]
+  milestones: Milestone[]
+  birthDate: string
   userId: string
 }
 
-export function WeekGrid({ weeksLived, documentedWeeks, userId }: WeekGridProps) {
+export function WeekGrid({ weeksLived, documentedWeeks, milestones, birthDate, userId }: WeekGridProps) {
   const [viewMode, setViewMode] = useState<"year" | "all">("year")
   const [selectedYear, setSelectedYear] = useState(0)
 
-  // Create a map for quick lookup
   const weekMap = new Map(documentedWeeks.map((week) => [week.week_number, week]))
 
-  // Calculate years lived
   const yearsLived = Math.ceil(weeksLived / 52)
   const weeksPerYear = 52
 
-  // Generate years array for selector
   const years = Array.from({ length: yearsLived }, (_, i) => i)
 
-  // Get weeks to display based on view mode
+  const getWeekNumberForDate = (dateStr: string) => {
+    const birth = new Date(birthDate)
+    const date = new Date(dateStr)
+    const weeksSinceBirth = Math.floor((date.getTime() - birth.getTime()) / (7 * 24 * 60 * 60 * 1000))
+    return weeksSinceBirth + 1
+  }
+
+  const milestonesByWeek = new Map<number, Milestone[]>()
+  milestones.forEach(milestone => {
+    const weekNum = getWeekNumberForDate(milestone.milestone_date)
+    if (!milestonesByWeek.has(weekNum)) {
+      milestonesByWeek.set(weekNum, [])
+    }
+    milestonesByWeek.get(weekNum)!.push(milestone)
+  })
+
   const getWeeksToDisplay = () => {
     if (viewMode === "year") {
       const startWeek = selectedYear * weeksPerYear
       const endWeek = Math.min(startWeek + weeksPerYear, weeksLived)
       return Array.from({ length: endWeek - startWeek }, (_, i) => startWeek + i + 1)
     } else {
-      // Show all weeks in a compact grid (80 years)
-      return Array.from({ length: 80 * 52 }, (_, i) => i + 1)
+      return Array.from({ length: 100 * 52 }, (_, i) => i + 1)
     }
   }
 
@@ -97,16 +117,18 @@ export function WeekGrid({ weeksLived, documentedWeeks, userId }: WeekGridProps)
             <div className="mb-4 text-sm text-stone-600">
               Viewing weeks {selectedYear * 52 + 1} - {Math.min((selectedYear + 1) * 52, weeksLived)} of your life
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="grid grid-cols-13 gap-1 mb-4" style={{ gridTemplateColumns: 'repeat(13, minmax(0, 1fr))' }}>
               {weeksToDisplay.map((weekNumber) => {
                 const week = weekMap.get(weekNumber)
                 const isLived = weekNumber <= weeksLived
+                const weekMilestones = milestonesByWeek.get(weekNumber) || []
 
                 return (
                   <WeekCell
                     key={weekNumber}
                     weekNumber={weekNumber}
                     week={week}
+                    milestones={weekMilestones}
                     isLived={isLived}
                     userId={userId}
                     size="large"
@@ -118,18 +140,20 @@ export function WeekGrid({ weeksLived, documentedWeeks, userId }: WeekGridProps)
         ) : (
           <>
             <div className="mb-4 text-sm text-stone-600">
-              Viewing your entire life timeline (80 years = 4,160 weeks)
+              Viewing your entire life timeline (100 years = 5,200 weeks)
             </div>
             <div className="grid grid-cols-52 gap-0.5">
               {weeksToDisplay.map((weekNumber) => {
                 const week = weekMap.get(weekNumber)
                 const isLived = weekNumber <= weeksLived
+                const weekMilestones = milestonesByWeek.get(weekNumber) || []
 
                 return (
                   <WeekCell
                     key={weekNumber}
                     weekNumber={weekNumber}
                     week={week}
+                    milestones={weekMilestones}
                     isLived={isLived}
                     userId={userId}
                     size="small"

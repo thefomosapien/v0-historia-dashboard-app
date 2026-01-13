@@ -149,3 +149,10 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+/* Add custom grid-cols-13 for year view with 4 rows of 13 weeks */
+@layer utilities {
+  .grid-cols-13 {
+    grid-template-columns: repeat(13, minmax(0, 1fr));
+  }
+}

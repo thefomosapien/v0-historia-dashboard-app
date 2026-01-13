@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 export default async function Home() {
   const supabase = await createClient()
@@ -17,7 +18,17 @@ export default async function Home() {
     <div className="min-h-screen bg-gradient-to-b from-stone-50 to-stone-100">
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="font-serif text-6xl md:text-7xl font-bold text-slate-900 mb-6 text-balance">Historia</h1>
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/historia-logo.svg"
+              alt="Historia"
+              width={400}
+              height={120}
+              className="h-24 w-auto"
+              priority
+            />
+          </div>
+          {/* </CHANGE> */}
           <p className="text-xl md:text-2xl text-stone-600 mb-4 text-balance">Your Life, Week by Week</p>
           <p className="text-lg text-stone-600 mb-12 max-w-2xl mx-auto text-pretty">
             Document your life's journey one week at a time. Reflect on your experiences, track your growth, and create

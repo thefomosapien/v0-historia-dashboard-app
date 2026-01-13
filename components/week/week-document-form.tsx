@@ -37,7 +37,7 @@ interface WeekDocumentFormProps {
     location: string | null
     chapter: string | null
     is_milestone: boolean | null
-    milestone_title: string | null
+    milestone_date: string | null // added milestone_date field
   } | null
 }
 
@@ -64,7 +64,7 @@ export function WeekDocumentForm({
   const [location, setLocation] = useState(existingWeek?.location || "")
   const [chapter, setChapter] = useState(existingWeek?.chapter || "")
   const [isMilestone, setIsMilestone] = useState(existingWeek?.is_milestone || false)
-  const [milestoneTitle, setMilestoneTitle] = useState(existingWeek?.milestone_title || "")
+  const [milestoneDate, setMilestoneDate] = useState(existingWeek?.milestone_date || "")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -84,7 +84,7 @@ export function WeekDocumentForm({
         location: location || null,
         chapter: chapter || null,
         isMilestone,
-        milestoneTitle: isMilestone ? (milestoneTitle || title || null) : null,
+        milestoneDate: isMilestone ? (milestoneDate || null) : null, // pass milestone date
       })
 
       router.push("/dashboard")
@@ -196,18 +196,37 @@ export function WeekDocumentForm({
             </div>
 
             {isMilestone && (
-              <div className="space-y-2 pl-6 border-l-2 border-amber-500">
-                <Label htmlFor="milestoneTitle">Milestone Title (appears in grid)</Label>
-                <Input
-                  id="milestoneTitle"
-                  value={milestoneTitle}
-                  onChange={(e) => setMilestoneTitle(e.target.value)}
-                  placeholder="e.g., Graduated College, Got Married, Started Company"
-                  className="border-stone-300"
-                />
-                <p className="text-sm text-stone-500">
-                  Short title displayed inline in the week grid (uses week title if empty)
-                </p>
+              <div className="space-y-4 pl-6 border-l-2 border-amber-500">
+                <div className="space-y-2">
+                  <Label htmlFor="milestoneDate">Milestone Date</Label>
+                  <Input
+                    id="milestoneDate"
+                    type="date"
+                    value={milestoneDate}
+                    onChange={(e) => setMilestoneDate(e.target.value)}
+                    min={weekStartDate}
+                    max={weekEndDate}
+                    className="border-stone-300"
+                  />
+                  <p className="text-sm text-stone-500">
+                    Specific date this milestone occurred (within this week)
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="title">Milestone Title</Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g., Graduated College, Got Married"
+                    className="border-stone-300"
+                    required={isMilestone}
+                  />
+                  <p className="text-sm text-stone-500">
+                    Title displayed inline in the week grid
+                  </p>
+                </div>
               </div>
             )}
 

@@ -13,6 +13,7 @@ interface SaveWeekData {
   location: string | null
   chapter: string | null
   isMilestone: boolean
+  milestoneDate: string | null // added milestone_date field
 }
 
 export async function saveWeek(data: SaveWeekData) {
@@ -37,6 +38,7 @@ export async function saveWeek(data: SaveWeekData) {
     location: data.location,
     chapter: data.chapter,
     is_milestone: data.isMilestone,
+    milestone_date: data.milestoneDate, // added milestone_date to weekData
     is_documented: true,
   }
 
