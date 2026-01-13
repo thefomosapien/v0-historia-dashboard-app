@@ -61,8 +61,10 @@ export function SignupForm() {
         router.push("/dashboard")
       }
     } catch (err: any) {
-      if (err.message === "Failed to fetch" || err.name === "TypeError") {
-        setError("Unable to connect to authentication service. Please check your internet connection and try again.")
+      if (err.message === "Failed to fetch" || err.name === "TypeError" || err.name === "AuthRetryableFetchError") {
+        setError(
+          "Unable to connect to authentication service. This may be a preview environment limitation. Please try deploying to Vercel for full functionality.",
+        )
       } else {
         setError(err.message || "An error occurred during signup")
       }
