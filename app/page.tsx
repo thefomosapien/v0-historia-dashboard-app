@@ -1,34 +1,50 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import { DEV_MODE } from "@/lib/dev-mode"
+import { DevBanner } from "@/components/dev-banner"
 
 export default async function Home() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  if (!DEV_MODE) {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (user) {
-    redirect("/dashboard")
+    if (user) {
+      redirect("/dashboard")
+    }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-stone-50 to-stone-100">
+      <DevBanner />
+      {DEV_MODE && (
+        <div className="bg-stone-200 py-3 px-4">
+          <div className="container mx-auto flex items-center justify-center gap-4">
+            <span className="text-stone-600 text-sm">Quick access:</span>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/dashboard">Dashboard</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/week/1">Week 1</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/week/100">Week 100</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/week/1800">Current Week</Link>
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center mb-6">
-            <Image
-              src="/historia-logo.svg"
-              alt="Historia"
-              width={400}
-              height={120}
-              className="h-24 w-auto"
-              priority
-            />
+            <Image src="/historia-logo.svg" alt="Historia" width={400} height={120} className="h-24 w-auto" priority />
           </div>
-          {/* </CHANGE> */}
           <p className="text-xl md:text-2xl text-stone-600 mb-4 text-balance">Your Life, Week by Week</p>
           <p className="text-lg text-stone-600 mb-12 max-w-2xl mx-auto text-pretty">
             Document your life's journey one week at a time. Reflect on your experiences, track your growth, and create

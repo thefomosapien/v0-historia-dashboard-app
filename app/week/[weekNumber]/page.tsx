@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect, notFound } from 'next/navigation'
+import { redirect, notFound } from "next/navigation"
 import { WeekDocumentForm } from "@/components/week/week-document-form"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from "lucide-react"
+import { DEV_MODE, MOCK_PROFILE, MOCK_USER, generateMockWeeks } from "@/lib/dev-mode"
+import { DevBanner } from "@/components/dev-banner"
 
 interface PageProps {
   params: Promise<{ weekNumber: string }>
@@ -17,22 +19,46 @@ export default async function WeekPage({ params }: PageProps) {
     notFound()
   }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = MOCK_USER
+  let profile = MOCK_PROFILE
+  let existingWeek = null
 
-  if (!user) {
-    redirect("/auth/login")
-  }
+  if (DEV_MODE) {
+    const birthDate = new Date(MOCK_PROFILE.date_of_birth)
+    const today = new Date()
+    const weeksLived = Math.floor((today.getTime() - birthDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
 
-  // Get user profile to calculate dates
-  const { data: profiles } = await supabase.from("profiles").select("*").eq("id", user.id)
+    const mockWeeks = generateMockWeeks(MOCK_USER.id, weeksLived)
+    existingWeek = mockWeeks.find((w) => w.week_number === weekNum) || null
+  } else {
+    const supabase = await createClient()
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser()
 
-  const profile = profiles?.[0]
+    if (!authUser) {
+      redirect("/auth/login")
+    }
 
-  if (!profile) {
-    redirect("/auth/login")
+    user = authUser
+
+    // Get user profile
+    const { data: profiles } = await supabase.from("profiles").select("*").eq("id", user.id)
+
+    profile = profiles?.[0]
+
+    if (!profile) {
+      redirect("/auth/login")
+    }
+
+    // Get existing week data
+    const { data: weekData } = await supabase
+      .from("weeks")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("week_number", weekNum)
+
+    existingWeek = weekData?.[0] || null
   }
 
   // Calculate week start and end dates
@@ -47,13 +73,14 @@ export default async function WeekPage({ params }: PageProps) {
   const today = new Date()
   const hasOccurred = weekStartDate <= today
 
-  // Get existing week data
-  const { data: weekData } = await supabase.from("weeks").select("*").eq("user_id", user.id).eq("week_number", weekNum)
-
-  const existingWeek = weekData?.[0] || null
+  // Calculate age during this week
+  const ageInWeeks = weekNum
+  const ageInYears = Math.floor(ageInWeeks / 52)
+  const remainingWeeks = ageInWeeks % 52
 
   return (
     <div className="min-h-screen bg-stone-50">
+      <DevBanner />
       <header className="border-b border-stone-200 bg-white">
         <div className="container mx-auto px-4 py-4">
           <Button variant="ghost" asChild className="mb-2">
@@ -67,6 +94,9 @@ export default async function WeekPage({ params }: PageProps) {
             {weekStartDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
             {" - "}
             {weekEndDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+          </p>
+          <p className="text-stone-500 text-sm mt-1">
+            Age: {ageInYears} years, {remainingWeeks} weeks
           </p>
         </div>
       </header>
