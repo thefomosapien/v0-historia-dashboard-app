@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -23,6 +24,10 @@ export function LoginForm() {
     setError(null)
 
     try {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error("Supabase configuration missing. Please check your environment variables.")
+      }
+
       const supabase = createClient()
 
       const { error: authError } = await supabase.auth.signInWithPassword({
@@ -34,7 +39,11 @@ export function LoginForm() {
 
       router.push("/dashboard")
     } catch (err: any) {
-      setError(err.message || "Invalid email or password")
+      if (err.message === "Failed to fetch" || err.name === "TypeError") {
+        setError("Unable to connect to authentication service. Please check your internet connection and try again.")
+      } else {
+        setError(err.message || "Invalid email or password")
+      }
     } finally {
       setLoading(false)
     }
@@ -81,6 +90,13 @@ export function LoginForm() {
           <Button type="submit" disabled={loading} className="w-full bg-slate-900 hover:bg-slate-800 text-white">
             {loading ? "Logging in..." : "Log In"}
           </Button>
+
+          <p className="text-center text-sm text-stone-600">
+            Don't have an account?{" "}
+            <Link href="/auth/signup" className="text-lime-600 hover:text-lime-700 font-medium">
+              Sign up
+            </Link>
+          </p>
         </form>
       </CardContent>
     </Card>

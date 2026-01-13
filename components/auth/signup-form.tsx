@@ -26,6 +26,10 @@ export function SignupForm() {
     setError(null)
 
     try {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error("Supabase configuration missing. Please check your environment variables.")
+      }
+
       const supabase = createClient()
 
       // Sign up the user
@@ -57,7 +61,11 @@ export function SignupForm() {
         router.push("/dashboard")
       }
     } catch (err: any) {
-      setError(err.message || "An error occurred during signup")
+      if (err.message === "Failed to fetch" || err.name === "TypeError") {
+        setError("Unable to connect to authentication service. Please check your internet connection and try again.")
+      } else {
+        setError(err.message || "An error occurred during signup")
+      }
     } finally {
       setLoading(false)
     }
