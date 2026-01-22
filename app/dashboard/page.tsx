@@ -1,26 +1,29 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
-import { WeekStats } from "@/components/dashboard/week-stats"
-import { WeekGrid } from "@/components/dashboard/week-grid"
-import { DEV_MODE, MOCK_PROFILE, MOCK_USER, generateMockWeeks, generateMockMilestones } from "@/lib/dev-mode"
+import { DashboardClient } from "@/components/dashboard/dashboard-client"
+import {
+  DEV_MODE,
+  MOCK_PROFILE,
+  MOCK_USER,
+  generateMockPhases,
+  generateMockMemories,
+  generateMockMilestones,
+} from "@/lib/dev-mode"
 import { DevBanner } from "@/components/dev-banner"
+import type { Phase, Memory, Milestone } from "@/lib/types"
 
 export default async function DashboardPage() {
   let user = MOCK_USER
   let profile = MOCK_PROFILE
-  let weeks: any[] = []
-  let milestones: any[] = []
-  let documentedCount = 0
+  let phases: Phase[] = []
+  let memories: Memory[] = []
+  let milestones: Milestone[] = []
 
   if (DEV_MODE) {
-    const birthDate = new Date(MOCK_PROFILE.date_of_birth)
-    const today = new Date()
-    const weeksLived = Math.floor((today.getTime() - birthDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
-
-    weeks = generateMockWeeks(MOCK_USER.id, weeksLived)
+    phases = generateMockPhases(MOCK_USER.id, MOCK_PROFILE.date_of_birth)
+    memories = generateMockMemories(MOCK_USER.id, MOCK_PROFILE.date_of_birth)
     milestones = generateMockMilestones(MOCK_USER.id, MOCK_PROFILE.date_of_birth)
-    documentedCount = weeks.filter((w) => w.is_documented).length
   } else {
     const supabase = await createClient()
     const {
@@ -61,18 +64,16 @@ export default async function DashboardPage() {
       redirect("/auth/login")
     }
 
-    // Calculate weeks lived
+    // Generate birthday milestones
     const birthDate = new Date(profile.date_of_birth)
     const birthMonth = birthDate.getMonth()
     const birthDay = birthDate.getDate()
     const birthYear = birthDate.getFullYear()
 
     const birthdayMilestones = []
-
     for (let age = 1; age <= 100; age++) {
       const birthdayYear = birthYear + age
       const birthdayDate = new Date(birthdayYear, birthMonth, birthDay)
-
       birthdayMilestones.push({
         user_id: user.id,
         milestone_date: birthdayDate.toISOString().split("T")[0],
@@ -81,7 +82,7 @@ export default async function DashboardPage() {
       })
     }
 
-    // Check which birthday milestones already exist
+    // Check existing birthdays
     const { data: existingBirthdays } = await supabase
       .from("milestones")
       .select("milestone_date")
@@ -89,35 +90,22 @@ export default async function DashboardPage() {
       .eq("is_birthday", true)
 
     const existingDates = new Set(existingBirthdays?.map((m) => m.milestone_date) || [])
-
-    // Insert birthday milestones that don't exist yet
     const milestonesToInsert = birthdayMilestones.filter((m) => !existingDates.has(m.milestone_date))
 
     if (milestonesToInsert.length > 0) {
       await supabase.from("milestones").insert(milestonesToInsert)
     }
 
-    // Fetch all milestones
-    const { data: milestonesData } = await supabase
-      .from("milestones")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("milestone_date", { ascending: true })
+    // Fetch all data
+    const [phasesResult, memoriesResult, milestonesResult] = await Promise.all([
+      supabase.from("phases").select("*").eq("user_id", user.id).order("start_date", { ascending: true }),
+      supabase.from("memories").select("*").eq("user_id", user.id).order("memory_date", { ascending: true }),
+      supabase.from("milestones").select("*").eq("user_id", user.id).order("milestone_date", { ascending: true }),
+    ])
 
-    milestones = milestonesData || []
-
-    // Fetch documented weeks
-    const { data: weeksData } = await supabase.from("weeks").select("*").eq("user_id", user.id)
-
-    weeks = weeksData || []
-
-    const { count } = await supabase
-      .from("weeks")
-      .select("*", { count: "exact" })
-      .eq("user_id", user.id)
-      .eq("is_documented", true)
-
-    documentedCount = count || 0
+    phases = phasesResult.data || []
+    memories = memoriesResult.data || []
+    milestones = milestonesResult.data || []
   }
 
   // Calculate weeks lived
@@ -125,27 +113,19 @@ export default async function DashboardPage() {
   const today = new Date()
   const weeksLived = Math.floor((today.getTime() - birthDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
 
-  const milestoneCount = milestones?.length || 0
-
   return (
     <div className="min-h-screen bg-stone-50">
       <DevBanner />
       <DashboardHeader profile={profile} />
 
       <main className="container mx-auto px-4 py-8">
-        <WeekStats
-          weeksLived={weeksLived}
-          weeksDocumented={documentedCount}
-          milestoneCount={milestoneCount}
-          birthDate={profile.date_of_birth}
-        />
-
-        <WeekGrid
-          weeksLived={weeksLived}
-          documentedWeeks={weeks}
-          milestones={milestones}
-          birthDate={profile.date_of_birth}
+        <DashboardClient
           userId={user.id}
+          birthDate={profile.date_of_birth}
+          weeksLived={weeksLived}
+          initialPhases={phases}
+          initialMemories={memories}
+          initialMilestones={milestones}
         />
       </main>
     </div>
